@@ -80,7 +80,7 @@
         document.addEventListener('mouseup', () => { isDragging = false; });
 
         const iframe = document.createElement('iframe');
-        iframe.src = 'https://ТВОЙ_САЙТ.pages.dev/chat.html';
+        iframe.src = 'https://ifa.ainurumaev67.workers.dev/chat.html';
         Object.assign(iframe.style, { flex: '1', border: 'none', width: '100%' });
         windowEl.appendChild(iframe);
     }
