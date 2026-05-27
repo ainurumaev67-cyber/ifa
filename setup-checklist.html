@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IFA — Чек-лист переменных</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f4f8; color: #222; padding: 20px; }
+        .container { max-width: 700px; margin: 0 auto; background: #fff; border-radius: 14px; padding: 30px; box-shadow: 0 6px 24px rgba(0,0,0,0.08); }
+        h1 { font-size: 26px; margin-bottom: 6px; }
+        h2 { font-size: 18px; margin: 24px 0 12px; color: #6C63FF; }
+        p.sub { color: #666; margin-bottom: 20px; font-size: 14px; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+        th { text-align: left; padding: 10px 8px; background: #6C63FF; color: #fff; font-size: 13px; }
+        td { padding: 10px 8px; border-bottom: 1px solid #eee; font-size: 14px; }
+        tr:hover { background: #fafafa; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: bold; }
+        .secret { background: #ffe0e0; color: #c00; }
+        .note { margin-top: 16px; padding: 14px; background: #fffbe6; border-left: 4px solid #ffb700; border-radius: 6px; font-size: 13px; }
+        code { background: #f0f0f5; padding: 2px 6px; border-radius: 4px; font-size: 13px; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>IFA Project</h1>
+    <p class="sub">Чек-лист переменных для Cloudflare Worker</p>
+
+    <h2>Секретные переменные</h2>
+    <p class="sub">Workers & Pages → ifa-project → Settings → Variables & Secrets</p>
+    <table>
+        <tr><th>Имя</th><th>Тип</th><th>Описание</th></tr>
+        <tr><td><code>HF_KEY_1</code></td><td><span class="badge secret">Secret</span></td><td>API-ключ Hugging Face №1 (06:00–10:00)</td></tr>
+        <tr><td><code>HF_KEY_2</code></td><td><span class="badge secret">Secret</span></td><td>API-ключ Hugging Face №2 (10:00–14:00)</td></tr>
+        <tr><td><code>HF_KEY_3</code></td><td><span class="badge secret">Secret</span></td><td>API-ключ Hugging Face №3 (14:00–18:00)</td></tr>
+        <tr><td><code>HF_KEY_4</code></td><td><span class="badge secret">Secret</span></td><td>API-ключ Hugging Face №4 (18:00–22:00)</td></tr>
+        <tr><td><code>KEY_1_EXHAUSTED</code></td><td><span class="badge secret">Secret</span></td><td>Флаг "устал" для ключа №1</td></tr>
+        <tr><td><code>KEY_2_EXHAUSTED</code></td><td><span class="badge secret">Secret</span></td><td>Флаг "устал" для ключа №2</td></tr>
+        <tr><td><code>KEY_3_EXHAUSTED</code></td><td><span class="badge secret">Secret</span></td><td>Флаг "устал" для ключа №3</td></tr>
+        <tr><td><code>KEY_4_EXHAUSTED</code></td><td><span class="badge secret">Secret</span></td><td>Флаг "устал" для ключа №4</td></tr>
+        <tr><td><code>CF_ACCOUNT_ID</code></td><td><span class="badge secret">Secret</span></td><td>Cloudflare Account ID</td></tr>
+        <tr><td><code>CF_API_TOKEN</code></td><td><span class="badge secret">Secret</span></td><td>Cloudflare API Token</td></tr>
+        <tr><td><code>CF_SCRIPT_NAME</code></td><td><span class="badge secret">Secret</span></td><td>Имя скрипта (ifa-project)</td></tr>
+    </table>
+
+    <h2>Cron Trigger</h2>
+    <p class="sub">Workers & Pages → ifa-project → Settings → Triggers</p>
+    <table>
+        <tr><th>Имя</th><th>Расписание</th><th>Действие</th></tr>
+        <tr><td><code>reset-exhausted</code></td><td><code>0 0 * * *</code></td><td>Сброс всех флагов KEY_X_EXHAUSTED в false</td></tr>
+    </table>
+
+    <div class="note">
+        <strong>Важно:</strong> API Token должен иметь права <code>Workers Scripts:Edit</code>.<br>
+        Все флаги изначально установить в <code>false</code>.<br>
+        Замени <code>ТВОЙ_САЙТ.pages.dev</code> в widget.js на реальный домен.
+    </div>
+</div>
+</body>
+</html>

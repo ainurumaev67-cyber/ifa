@@ -1,0 +1,9 @@
+{
+  "name": "ifa-project",
+  "main": "_worker.js",
+  "compatibility_date": "2026-05-27",
+  "assets": {
+    "directory": ".",
+    "not_found_handling": "404-page"
+  }
+}
