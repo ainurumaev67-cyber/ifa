@@ -8,39 +8,35 @@ const exhaustedFlags = {
 
 export default {
     // Обработчик HTTP-запросов
-    async fetch(request, env, ctx) {
+    async fetch(request, env) {
         const url = new URL(request.url);
 
         // Обработка OPTIONS (preflight CORS)
         if (request.method === 'OPTIONS') {
             return new Response(null, {
-                headers: corsHeaders()
+                headers: {
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                    'Access-Control-Allow-Headers': 'Content-Type'
+                }
             });
         }
 
-        let response;
-
         // API: запрос к Hugging Face
         if (url.pathname === '/api' && request.method === 'POST') {
-            response = await handleApiRequest(request, env, ctx);
-        } else {
-            // Статика
-            response = await env.ASSETS.fetch(request);
+            const apiResponse = await handleApiRequest(request, env);
+            const newHeaders = new Headers(apiResponse.headers);
+            newHeaders.set('Content-Security-Policy', "frame-ancestors *");
+            newHeaders.set('Access-Control-Allow-Origin', '*');
+            return new Response(apiResponse.body, {
+                status: apiResponse.status,
+                statusText: apiResponse.statusText,
+                headers: newHeaders
+            });
         }
 
-        // Добавляем заголовки
-        const newHeaders = new Headers(response.headers);
-        newHeaders.set('Access-Control-Allow-Origin', '*');
-        newHeaders.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        newHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
-        newHeaders.delete('X-Frame-Options');
-        newHeaders.set('Content-Security-Policy', "frame-ancestors *");
-
-        return new Response(response.body, {
-            status: response.status,
-            statusText: response.statusText,
-            headers: newHeaders
-        });
+        // Статика — отдаём как есть
+        return env.ASSETS.fetch(request);
     },
 
     // Обработчик Cron-триггера (сброс флагов в 00:00 МСК)
@@ -53,15 +49,7 @@ export default {
     }
 };
 
-function corsHeaders() {
-    return {
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type'
-    };
-}
-
-async function handleApiRequest(request, env, ctx) {
+async function handleApiRequest(request, env) {
     try {
         const { message } = await request.json();
         if (!message || message.trim() === '') {
@@ -82,61 +70,33 @@ async function handleApiRequest(request, env, ctx) {
             return jsonResponse({ reply: 'Ошибка сервера.' }, 500);
         }
 
-        // Создаём AbortController с таймаутом 30 секунд
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000);
-        
-        // Если контекст прерван (пользователь закрыл вкладку) — отменяем
-        ctx?.waitUntil?.(new Promise(resolve => {
-            // Это нужно для продления жизни Worker при долгом ответе
-        }));
-
-        try {
-            const hfResponse = await fetch(
-                'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',
-                {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${hfKey}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        inputs: `<s>[INST] ${message} [/INST]`,
-                        parameters: {
-                            max_new_tokens: 512,
-                            temperature: 0.7,
-                            wait_for_model: false
-                        }
-                    }),
-                    signal: controller.signal
-                }
-            );
-            clearTimeout(timeoutId);
-
-            if (hfResponse.status === 429 || hfResponse.status === 403) {
-                exhaustedFlags[`key_${keyIndex}`] = true;
-                return jsonResponse({ reply: 'Ассистент устал. Попробуйте позже.' });
+        const hfResponse = await fetch(
+            'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',
+            {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${hfKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    inputs: `<s>[INST] ${message} [/INST]`,
+                    parameters: { max_new_tokens: 512, temperature: 0.7 }
+                })
             }
+        );
 
-            if (hfResponse.status === 503) {
-                return jsonResponse({ reply: 'Модель загружается. Повторите через минуту.' });
-            }
-
-            if (!hfResponse.ok) {
-                return jsonResponse({ reply: 'Ошибка при обращении к ИИ.' }, 502);
-            }
-
-            const data = await hfResponse.json();
-            const reply = data[0]?.generated_text || 'Не удалось получить ответ.';
-            return jsonResponse({ reply });
-
-        } catch (fetchError) {
-            clearTimeout(timeoutId);
-            if (fetchError.name === 'AbortError') {
-                return jsonResponse({ reply: 'Превышено время ожидания. Попробуйте позже.' });
-            }
-            throw fetchError;
+        if (hfResponse.status === 429 || hfResponse.status === 403) {
+            exhaustedFlags[`key_${keyIndex}`] = true;
+            return jsonResponse({ reply: 'Ассистент устал. Попробуйте позже.' });
         }
+
+        if (!hfResponse.ok) {
+            return jsonResponse({ reply: 'Ошибка при обращении к ИИ.' }, 502);
+        }
+
+        const data = await hfResponse.json();
+        const reply = data[0]?.generated_text || 'Не удалось получить ответ.';
+        return jsonResponse({ reply });
 
     } catch (error) {
         return jsonResponse({ reply: 'Ошибка сервера.' }, 500);
@@ -156,6 +116,6 @@ function getActiveKeyIndex() {
 function jsonResponse(data, status = 200) {
     return new Response(JSON.stringify(data), {
         status,
-        headers: { 'Content-Type': 'application/json; charset=utf-8' }
+        headers: { 'Content-Type': 'application/json' }
     });
 }
