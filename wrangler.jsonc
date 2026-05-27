@@ -2,10 +2,5 @@
   "name": "ifa-project",
   "main": "_worker.js",
   "compatibility_date": "2026-05-27",
-  "routes": [
-    {
-      "pattern": "ifa.ainurumaev67.workers.dev/api",
-      "script": "ifa-project"
-    }
-  ]
+  "keep_vars": true
 }
