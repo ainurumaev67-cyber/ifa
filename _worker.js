@@ -28,14 +28,10 @@ export default {
             response = await env.ASSETS.fetch(request);
         }
 
-        // Добавляем CORS и X-Frame-Options заголовки ко всем ответам
+        // Добавляем заголовки для безопасности iframe и CORS
         const newHeaders = new Headers(response.headers);
-        newHeaders.set('Access-Control-Allow-Origin', '*');
-        newHeaders.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        newHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
-        // РАЗРЕШАЕМ встраивание в iframe
-        newHeaders.delete('X-Frame-Options');
         newHeaders.set('Content-Security-Policy', "frame-ancestors *");
+        newHeaders.set('Access-Control-Allow-Origin', '*');
 
         return new Response(response.body, {
             status: response.status,
@@ -44,7 +40,7 @@ export default {
         });
     },
 
-    // Обработчик Cron-триггера
+    // Обработчик Cron-триггера (сброс флагов в 00:00 МСК)
     async scheduled(controller, env, ctx) {
         exhaustedFlags.key_1 = false;
         exhaustedFlags.key_2 = false;
