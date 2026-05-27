@@ -1,5 +1,5 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, signInWithPopup, GoogleAuthProvider, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyAffcR41eZ8Cfpo2S4StX-r8VYy_j5PLsc",
@@ -13,33 +13,66 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
-const provider = new GoogleAuthProvider();
 
+const loginForm = document.getElementById('login-form');
+const emailInput = document.getElementById('email');
+const passwordInput = document.getElementById('password');
 const loginBtn = document.getElementById('login-btn');
+const registerBtn = document.getElementById('register-btn');
 const userInfo = document.getElementById('user-info');
 const dashboardLink = document.getElementById('dashboard-link');
 const logoutBtn = document.getElementById('logout-btn');
+const authBlock = document.getElementById('auth-block');
 
 // Отслеживание состояния входа
 onAuthStateChanged(auth, user => {
   if (user) {
-    if (loginBtn) loginBtn.style.display = 'none';
-    if (userInfo) userInfo.textContent = `Привет, ${user.displayName}`;
+    if (authBlock) authBlock.style.display = 'none';
+    if (userInfo) userInfo.textContent = `Привет, ${user.email}`;
     if (dashboardLink) dashboardLink.style.display = 'inline-block';
+    if (logoutBtn) logoutBtn.style.display = 'inline-block';
   } else {
-    if (loginBtn) loginBtn.style.display = 'inline-block';
+    if (authBlock) authBlock.style.display = 'block';
     if (userInfo) userInfo.textContent = '';
     if (dashboardLink) dashboardLink.style.display = 'none';
+    if (logoutBtn) logoutBtn.style.display = 'none';
   }
 });
 
 // Кнопка входа
 if (loginBtn) {
   loginBtn.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    if (!email || !password) {
+      alert('Введите email и пароль');
+      return;
+    }
     try {
-      await signInWithPopup(auth, provider);
+      await signInWithEmailAndPassword(auth, email, password);
     } catch (e) {
       alert('Ошибка входа: ' + e.message);
+    }
+  });
+}
+
+// Кнопка регистрации
+if (registerBtn) {
+  registerBtn.addEventListener('click', async () => {
+    const email = emailInput.value.trim();
+    const password = passwordInput.value;
+    if (!email || !password) {
+      alert('Введите email и пароль');
+      return;
+    }
+    if (password.length < 6) {
+      alert('Пароль должен быть не менее 6 символов');
+      return;
+    }
+    try {
+      await createUserWithEmailAndPassword(auth, email, password);
+    } catch (e) {
+      alert('Ошибка регистрации: ' + e.message);
     }
   });
 }
