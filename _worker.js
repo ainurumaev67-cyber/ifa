@@ -119,3 +119,4 @@ function jsonResponse(data, status = 200) {
         headers: { 'Content-Type': 'application/json; charset=utf-8' }
     });
 }
+// version: 1.0.1
