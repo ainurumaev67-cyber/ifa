@@ -10,7 +10,7 @@ export default {
     async fetch(request, env) {
         const url = new URL(request.url);
 
-        // Обработка OPTIONS (preflight CORS)
+        // CORS preflight
         if (request.method === 'OPTIONS') {
             return new Response(null, {
                 status: 204,
@@ -22,13 +22,13 @@ export default {
             });
         }
 
-        // API: запрос к Hugging Face
+        // API
         if (url.pathname === '/api' && request.method === 'POST') {
             return handleApiRequest(request, env);
         }
 
-        // Всё остальное отдаёт Pages, worker не вмешивается
-        return new Response('Not Found', { status: 404 });
+        // Статика
+        return env.ASSETS.fetch(request);
     },
 
     async scheduled(controller, env, ctx) {
@@ -36,7 +36,7 @@ export default {
         exhaustedFlags.key_2 = false;
         exhaustedFlags.key_3 = false;
         exhaustedFlags.key_4 = false;
-        console.log('[IFA] Флаги сброшены. Все ключи активны.');
+        console.log('[IFA] Флаги сброшены.');
     }
 };
 
