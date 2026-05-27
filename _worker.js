@@ -7,47 +7,47 @@ const exhaustedFlags = {
 };
 
 export default {
-    // Обработчик HTTP-запросов
     async fetch(request, env) {
         const url = new URL(request.url);
 
-        // Обработка OPTIONS (preflight CORS)
+        // 1. Обработка CORS preflight
         if (request.method === 'OPTIONS') {
             return new Response(null, {
+                status: 204,
                 headers: {
                     'Access-Control-Allow-Origin': '*',
                     'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-                    'Access-Control-Allow-Headers': 'Content-Type'
+                    'Access-Control-Allow-Headers': 'Content-Type, Authorization'
                 }
             });
         }
 
-        // API: запрос к Hugging Face
+        // 2. API-запросы
         if (url.pathname === '/api' && request.method === 'POST') {
-            const apiResponse = await handleApiRequest(request, env);
-            const newHeaders = new Headers(apiResponse.headers);
-            newHeaders.set('Content-Security-Policy', "frame-ancestors *");
-            newHeaders.set('Access-Control-Allow-Origin', '*');
-            return new Response(apiResponse.body, {
-                status: apiResponse.status,
-                statusText: apiResponse.statusText,
-                headers: newHeaders
-            });
+            return handleApiRequest(request, env);
         }
 
-        // Статика — отдаём как есть
-        return env.ASSETS.fetch(request);
+        // 3. ВСЁ ОСТАЛЬНОЕ — СТАТИКА
+        // Просто получаем файл из assets и отдаём как есть.
+        // Cloudflare сам добавит правильные Content-Type заголовки.
+        try {
+            return env.ASSETS.fetch(request);
+        } catch (e) {
+            return new Response('File not found', { status: 404 });
+        }
     },
 
-    // Обработчик Cron-триггера (сброс флагов в 00:00 МСК)
+    // Обработчик Cron-триггера
     async scheduled(controller, env, ctx) {
         exhaustedFlags.key_1 = false;
         exhaustedFlags.key_2 = false;
         exhaustedFlags.key_3 = false;
         exhaustedFlags.key_4 = false;
-        console.log('[IFA] Флаги сброшены. Все ключи активны.');
+        console.log('[IFA] Флаги сброшены.');
     }
 };
+
+// ... (все остальные функции handleApiRequest, getActiveKeyIndex и т.д. остаются БЕЗ ИЗМЕНЕНИЙ) ...
 
 async function handleApiRequest(request, env) {
     try {
@@ -116,6 +116,6 @@ function getActiveKeyIndex() {
 function jsonResponse(data, status = 200) {
     return new Response(JSON.stringify(data), {
         status,
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json; charset=utf-8' }
     });
 }
