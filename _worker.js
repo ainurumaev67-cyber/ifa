@@ -11,16 +11,40 @@ export default {
     async fetch(request, env) {
         const url = new URL(request.url);
 
-        // API: запрос к Hugging Face
-        if (url.pathname === '/api' && request.method === 'POST') {
-            return handleApiRequest(request, env);
+        // Обработка OPTIONS (preflight CORS)
+        if (request.method === 'OPTIONS') {
+            return new Response(null, {
+                headers: corsHeaders()
+            });
         }
 
-        // Всё остальное — статика
-        return env.ASSETS.fetch(request);
+        let response;
+
+        // API: запрос к Hugging Face
+        if (url.pathname === '/api' && request.method === 'POST') {
+            response = await handleApiRequest(request, env);
+        } else {
+            // Статика
+            response = await env.ASSETS.fetch(request);
+        }
+
+        // Добавляем CORS и X-Frame-Options заголовки ко всем ответам
+        const newHeaders = new Headers(response.headers);
+        newHeaders.set('Access-Control-Allow-Origin', '*');
+        newHeaders.set('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        newHeaders.set('Access-Control-Allow-Headers', 'Content-Type');
+        // РАЗРЕШАЕМ встраивание в iframe
+        newHeaders.delete('X-Frame-Options');
+        newHeaders.set('Content-Security-Policy', "frame-ancestors *");
+
+        return new Response(response.body, {
+            status: response.status,
+            statusText: response.statusText,
+            headers: newHeaders
+        });
     },
 
-    // Обработчик Cron-триггера (сброс флагов в 00:00 МСК)
+    // Обработчик Cron-триггера
     async scheduled(controller, env, ctx) {
         exhaustedFlags.key_1 = false;
         exhaustedFlags.key_2 = false;
@@ -30,6 +54,14 @@ export default {
     }
 };
 
+function corsHeaders() {
+    return {
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type'
+    };
+}
+
 async function handleApiRequest(request, env) {
     try {
         const { message } = await request.json();
@@ -37,27 +69,20 @@ async function handleApiRequest(request, env) {
             return jsonResponse({ reply: 'Введите вопрос.' });
         }
 
-        // Определяем активный ключ по московскому времени
         const keyIndex = getActiveKeyIndex();
         if (keyIndex === null) {
             return jsonResponse({ reply: 'Ассистент устал. Время работы: 06:00–22:00 МСК.' });
         }
 
-        // Проверяем флаг "устал" в памяти
         if (exhaustedFlags[`key_${keyIndex}`]) {
             return jsonResponse({ reply: 'Ассистент устал. Попробуйте позже.' });
         }
 
-        // Получаем ключ из секретных переменных
         const hfKey = env[`HF_KEY_${keyIndex}`];
         if (!hfKey) {
-            console.error(`[IFA] Ключ HF_KEY_${keyIndex} не найден`);
             return jsonResponse({ reply: 'Ошибка сервера.' }, 500);
         }
 
-        console.log(`[IFA] Использую ключ HF_KEY_${keyIndex}`);
-
-        // Запрос к Hugging Face
         const hfResponse = await fetch(
             'https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.3',
             {
@@ -68,56 +93,42 @@ async function handleApiRequest(request, env) {
                 },
                 body: JSON.stringify({
                     inputs: `<s>[INST] ${message} [/INST]`,
-                    parameters: {
-                        max_new_tokens: 512,
-                        temperature: 0.7
-                    }
+                    parameters: { max_new_tokens: 512, temperature: 0.7 }
                 })
             }
         );
 
-        // Если лимит исчерпан — ставим флаг
         if (hfResponse.status === 429 || hfResponse.status === 403) {
             exhaustedFlags[`key_${keyIndex}`] = true;
-            console.warn(`[IFA] Ключ HF_KEY_${keyIndex} исчерпан. Установлен флаг.`);
             return jsonResponse({ reply: 'Ассистент устал. Попробуйте позже.' });
         }
 
         if (!hfResponse.ok) {
-            console.error(`[IFA] Ошибка Hugging Face: ${hfResponse.status}`);
             return jsonResponse({ reply: 'Ошибка при обращении к ИИ.' }, 502);
         }
 
         const data = await hfResponse.json();
         const reply = data[0]?.generated_text || 'Не удалось получить ответ.';
-
         return jsonResponse({ reply });
 
     } catch (error) {
-        console.error(`[IFA] Ошибка сервера: ${error.message}`);
-        return jsonResponse({ reply: 'Произошла ошибка на сервере.' }, 500);
+        return jsonResponse({ reply: 'Ошибка сервера.' }, 500);
     }
 }
 
 function getActiveKeyIndex() {
     const now = new Date();
-    const utcHour = now.getUTCHours();
-    const mskHour = (utcHour + 3) % 24;
-
+    const mskHour = (now.getUTCHours() + 3) % 24;
     if (mskHour >= 6 && mskHour < 10) return 1;
     if (mskHour >= 10 && mskHour < 14) return 2;
     if (mskHour >= 14 && mskHour < 18) return 3;
     if (mskHour >= 18 && mskHour < 22) return 4;
-
     return null;
 }
 
 function jsonResponse(data, status = 200) {
-    return new Response(JSON.stringify(data, null, 2), {
+    return new Response(JSON.stringify(data), {
         status,
-        headers: {
-            'Content-Type': 'application/json; charset=utf-8',
-            'Access-Control-Allow-Origin': '*'
-        }
+        headers: { 'Content-Type': 'application/json' }
     });
 }
