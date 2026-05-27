@@ -1,9 +1,11 @@
 {
-  "name": "ifa",
+  "name": "ifa-project",
   "main": "_worker.js",
   "compatibility_date": "2026-05-27",
-  "assets": {
-    "directory": ".",
-    "not_found_handling": "404-page"
-  }
+  "routes": [
+    {
+      "pattern": "ifa.ainurumaev67.workers.dev/api",
+      "script": "ifa-project"
+    }
+  ]
 }
