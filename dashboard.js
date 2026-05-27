@@ -5,6 +5,8 @@ const winHeight = document.getElementById('win-height');
 const scriptOutput = document.getElementById('script-output');
 const copyBtn = document.getElementById('copy-btn');
 
+const WIDGET_URL = 'https://ifa.ainurumaev67.workers.dev/widget.js';
+
 function generateScript() {
   const color = btnColor.value;
   const text = btnText.value;
@@ -15,7 +17,7 @@ function generateScript() {
 (function(w,d,s){
   w._ifaConfig = { color:"${color}", text:"${text}", width:${width}, height:${height} };
   var f=d.getElementsByTagName(s)[0], j=d.createElement(s);
-  j.src="WIDGET_JS_URL";
+  j.src="${WIDGET_URL}";
   f.parentNode.insertBefore(j,f);
 })(window,document,"script");
 </` + `script>`;
