@@ -10,7 +10,7 @@ export default {
     async fetch(request, env) {
         const url = new URL(request.url);
 
-        // 1. Обработка CORS preflight
+        // Обработка OPTIONS (preflight CORS)
         if (request.method === 'OPTIONS') {
             return new Response(null, {
                 status: 204,
@@ -22,32 +22,23 @@ export default {
             });
         }
 
-        // 2. API-запросы
+        // API: запрос к Hugging Face
         if (url.pathname === '/api' && request.method === 'POST') {
             return handleApiRequest(request, env);
         }
 
-        // 3. ВСЁ ОСТАЛЬНОЕ — СТАТИКА
-        // Просто получаем файл из assets и отдаём как есть.
-        // Cloudflare сам добавит правильные Content-Type заголовки.
-        try {
-            return env.ASSETS.fetch(request);
-        } catch (e) {
-            return new Response('File not found', { status: 404 });
-        }
+        // Всё остальное отдаёт Pages, worker не вмешивается
+        return new Response('Not Found', { status: 404 });
     },
 
-    // Обработчик Cron-триггера
     async scheduled(controller, env, ctx) {
         exhaustedFlags.key_1 = false;
         exhaustedFlags.key_2 = false;
         exhaustedFlags.key_3 = false;
         exhaustedFlags.key_4 = false;
-        console.log('[IFA] Флаги сброшены.');
+        console.log('[IFA] Флаги сброшены. Все ключи активны.');
     }
 };
-
-// ... (все остальные функции handleApiRequest, getActiveKeyIndex и т.д. остаются БЕЗ ИЗМЕНЕНИЙ) ...
 
 async function handleApiRequest(request, env) {
     try {
@@ -119,4 +110,3 @@ function jsonResponse(data, status = 200) {
         headers: { 'Content-Type': 'application/json; charset=utf-8' }
     });
 }
-// version: 1.0.1
