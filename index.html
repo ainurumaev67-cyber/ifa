@@ -15,9 +15,17 @@
             <li>Настройка стилей под ваш сайт</li>
             <li>Работает 06:00–22:00 МСК</li>
         </ul>
-        <button id="login-btn">Войти через Google</button>
+
+        <div id="auth-block">
+            <input type="email" id="email" placeholder="Email">
+            <input type="password" id="password" placeholder="Пароль">
+            <button id="login-btn">Войти</button>
+            <button id="register-btn">Регистрация</button>
+        </div>
+
         <p id="user-info"></p>
         <a href="dashboard.html" id="dashboard-link" style="display:none;">Перейти в панель управления</a>
+        <button id="logout-btn" style="display:none;">Выйти</button>
     </div>
     <script type="module" src="auth.js"></script>
 </body>
