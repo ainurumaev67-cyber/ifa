@@ -4,6 +4,26 @@
     const text = config.text || '💬';
     const width = config.width || 380;
     const height = config.height || 500;
+    const variable = config.variable || '';
+    const dataType = config.dataType || '';
+    const description = config.description || '';
+
+    // Проверка домена
+    if (config.domains && config.domains.length > 0) {
+        if (!config.domains.includes(window.location.hostname)) {
+            console.warn('IFA: домен не разрешён');
+            return;
+        }
+    }
+
+    // Чтение переменной с сайта
+    let siteData = null;
+    if (variable) {
+        try {
+            const varName = variable.replace('window.', '');
+            siteData = window[varName];
+        } catch(e) {}
+    }
 
     // Кнопка
     const button = document.createElement('div');
@@ -19,8 +39,7 @@
     });
     document.body.appendChild(button);
 
-    let isOpen = false;
-    let overlay, windowEl, closeBtn;
+    let isOpen = false, overlay, windowEl, closeBtn;
     let isDragging = false, offsetX = 0, offsetY = 0;
 
     button.addEventListener('click', openWindow);
@@ -80,7 +99,9 @@
         document.addEventListener('mouseup', () => { isDragging = false; });
 
         const iframe = document.createElement('iframe');
-        iframe.src = 'https://ifa.ainurumaev67.workers.dev/chat.html';
+        const dataParam = siteData ? encodeURIComponent(JSON.stringify(siteData)) : '';
+        const descParam = description ? encodeURIComponent(description) : '';
+        iframe.src = `https://ifa.ainurumaev67.workers.dev/chat.html?data=${dataParam}&desc=${descParam}`;
         Object.assign(iframe.style, { flex: '1', border: 'none', width: '100%' });
         windowEl.appendChild(iframe);
     }
