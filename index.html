@@ -3,30 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>IFA — Ваш ИИ-ассистент</title>
+    <title>IFA — Iframe Assistant</title>
     <link rel="stylesheet" href="main.css">
 </head>
 <body>
-    <div class="container">
-        <h1>IFA Assistant</h1>
-        <p>Встройте ИИ-помощника на любой сайт за минуту</p>
-        <ul>
-            <li>Перетаскиваемое окно</li>
-            <li>Настройка стилей под ваш сайт</li>
-            <li>Работает 06:00–22:00 МСК</li>
-        </ul>
 
-        <div id="auth-block">
-            <input type="email" id="email" placeholder="Email">
-            <input type="password" id="password" placeholder="Пароль">
-            <button id="login-btn">Войти</button>
-            <button id="register-btn">Регистрация</button>
+    <!-- Боковое меню -->
+    <nav class="sidebar" id="sidebar">
+        <div class="sidebar-logo">
+            <img src="icon.svg" alt="IFA">
+            IFA
+        </div>
+        <button class="sidebar-btn active" data-section="home">🏠 Главная</button>
+        <button class="sidebar-btn" data-section="login" id="btn-login-menu">🔑 Вход</button>
+        <div class="sidebar-divider"></div>
+        <button class="sidebar-btn hidden" data-section="dashboard" id="btn-dashboard">⚙️ Панель</button>
+        <button class="sidebar-btn hidden" data-section="docs" id="btn-docs">📚 Документация</button>
+        <button class="sidebar-btn hidden" data-section="account" id="btn-account">👤 Аккаунт</button>
+        <div class="sidebar-footer">Разработчик · UL studio</div>
+    </nav>
+
+    <!-- Основной контент -->
+    <div class="main">
+
+        <!-- Главная -->
+        <div class="section active" id="sec-home">
+            <h1>Встройте ИИ-помощника на любой сайт</h1>
+            <p class="lead">Перетаскиваемое окно, ваш дизайн, работа по расписанию. Без кода.</p>
+            <div class="features-grid">
+                <div class="card"><div class="card-icon">🪟</div><h3>Перетаскиваемое окно</h3><p>Пользователи двигают чат куда удобно</p></div>
+                <div class="card"><div class="card-icon">🎨</div><h3>Ваш дизайн</h3><p>Цвет, размер, текст — всё настраивается</p></div>
+                <div class="card"><div class="card-icon">⏰</div><h3>06:00–22:00 МСК</h3><p>4 смены ключей для стабильной работы</p></div>
+                <div class="card"><div class="card-icon">🔒</div><h3>Привязка к домену</h3><p>До 5 сайтов на аккаунт</p></div>
+            </div>
         </div>
 
-        <p id="user-info"></p>
-        <a href="dashboard.html" id="dashboard-link" style="display:none;">Перейти в панель управления</a>
-        <button id="logout-btn" style="display:none;">Выйти</button>
+        <!-- Вход -->
+        <div class="section" id="sec-login">
+            <div class="auth-box">
+                <h2>Вход / Регистрация</h2>
+                <div class="form-group"><input type="email" id="email" placeholder="Email"></div>
+                <div class="form-group"><input type="password" id="password" placeholder="Пароль"></div>
+                <div class="form-actions">
+                    <button class="btn-primary" id="login-btn">Войти</button>
+                    <button class="btn-secondary" id="register-btn">Регистрация</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Панель управления -->
+        <div class="section" id="sec-dashboard">
+            <h2>Панель управления</h2>
+            <div class="dashboard-layout">
+                <div class="config-panel">
+                    <label>Цвет кнопки</label>
+                    <div class="color-row"><input type="color" value="#6C63FF" id="btn-color"><span id="color-value">#6C63FF</span></div>
+                    <label>Текст кнопки</label>
+                    <div class="form-group"><input type="text" value="💬" id="btn-text"></div>
+                    <label>Ширина окна</label>
+                    <div class="form-group"><input type="number" value="380" id="win-width"></div>
+                    <label>Высота окна</label>
+                    <div class="form-group"><input type="number" value="500" id="win-height"></div>
+                    <label>Домены (до 5, через запятую)</label>
+                    <div class="form-group"><input type="text" placeholder="example.com, mysite.ru" id="user-domains"></div>
+                    <label>Переменная на сайте</label>
+                    <div class="form-group"><input type="text" placeholder="window.shopData" id="site-variable"></div>
+                    <label>Тип данных</label>
+                    <div class="form-group">
+                        <select id="data-type">
+                            <option>Интернет-магазин</option>
+                            <option>Блог / статьи</option>
+                            <option>FAQ / поддержка</option>
+                            <option>Другое</option>
+                        </select>
+                    </div>
+                    <label>Описание данных</label>
+                    <div class="form-group"><textarea rows="3" placeholder="Опиши, что содержит переменная..." id="data-description"></textarea></div>
+                </div>
+                <div class="preview-box">
+                    <div class="preview-btn" style="background:#6C63FF;" id="preview-btn">💬</div>
+                </div>
+            </div>
+            <button class="btn-primary" style="margin-top:14px;" id="generate-btn">Сгенерировать ссылку</button>
+            <div class="script-box" id="script-output" style="display:none;"></div>
+        </div>
+
+        <!-- Документация -->
+        <div class="section" id="sec-docs">
+            <h2>Документация</h2>
+            <div class="docs-grid">
+                <div class="docs-card"><h3>1. Регистрация</h3><p>Создайте аккаунт через email и пароль.</p></div>
+                <div class="docs-card"><h3>2. Настройка</h3><p>Выберите цвет, размер, домены и переменную.</p></div>
+                <div class="docs-card"><h3>3. Установка</h3><p>Вставьте ссылку на сайт перед <code>&lt;/body&gt;</code>.</p></div>
+                <div class="docs-card"><h3>4. Переменная</h3><p>Создайте <code>window.shopData</code>. IFA прочитает.</p></div>
+                <div class="docs-card"><h3>5. График</h3><p>IFA работает 06:00–22:00 МСК.</p></div>
+                <div class="docs-card"><h3>6. Лимиты</h3><p>До 5 доменов. 4 ключа по 4 часа.</p></div>
+            </div>
+        </div>
+
+        <!-- Аккаунт -->
+        <div class="section" id="sec-account">
+            <div class="auth-box" style="text-align:center;">
+                <h2>Аккаунт</h2>
+                <p id="user-info" style="margin-bottom:12px;">Вы не вошли.</p>
+                <button class="btn-secondary" id="logout-btn" style="display:none;">Выйти</button>
+            </div>
+        </div>
+
+        <div class="footer-text">Iframe Assistant · 2026</div>
     </div>
+
     <script type="module" src="auth.js"></script>
+    <script src="dashboard.js"></script>
 </body>
 </html>
